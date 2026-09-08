@@ -1,1 +1,107 @@
-Put your submission for ex02-cache-blocking here, named for your roll number, for example AIE23001.c
+#ifndef ATEST_H
+#define ATEST_H
+
+#include <stdio.h>
+#include <math.h>
+
+typedef void (*test_func_t)(void);
+
+typedef struct {
+    const char *name;
+    const char *description;
+    test_func_t func;
+} test_case_t;
+
+#define MAX_TESTS 100
+
+static test_case_t test_list[MAX_TESTS];
+static int test_count = 0;
+static int current_test_failed = 0;
+
+#define TEST(test_name, test_description) \
+    void test_name(void)
+
+#define REGISTER(test_name) \
+    do { \
+        if (test_count < MAX_TESTS) { \
+            test_list[test_count].name = #test_name; \
+            test_list[test_count].description = ""; \
+            test_list[test_count].func = test_name; \
+            test_count++; \
+        } \
+    } while (0)
+
+#define ASSERT_NEAR(expected, actual, tolerance) \
+    do { \
+        double _expected = (expected); \
+        double _actual = (actual); \
+        double _tolerance = (tolerance); \
+        if (fabs(_expected - _actual) > _tolerance) { \
+            fprintf(stderr, \
+                    "FAIL: %s:%d: expected %.12f, got %.12f\n", \
+                    __FILE__, __LINE__, _expected, _actual); \
+            current_test_failed = 1; \
+        } \
+    } while (0)
+
+#define ASSERT_ARRAY_CLOSE(expected, actual, count, tolerance) \
+    do { \
+        for (int _i = 0; _i < (count); _i++) { \
+            double _expected = (expected)[_i]; \
+            double _actual = (actual)[_i]; \
+            double _tolerance = (tolerance); \
+            if (fabs(_expected - _actual) > _tolerance) { \
+                fprintf(stderr, \
+                        "FAIL: %s:%d: index %d: expected %.12f, got %.12f\n", \
+                        __FILE__, __LINE__, _i, _expected, _actual); \
+                current_test_failed = 1; \
+                break; \
+            } \
+        } \
+    } while (0)
+
+#define ASSERT_EQ_INT(expected, actual) \
+    do { \
+        int _expected = (expected); \
+        int _actual = (actual); \
+        if (_expected != _actual) { \
+            fprintf(stderr, \
+                    "FAIL: %s:%d: expected %d, got %d\n", \
+                    __FILE__, __LINE__, _expected, _actual); \
+            current_test_failed = 1; \
+        } \
+    } while (0)
+
+static int atest_run_all(void)
+{
+    int passed = 0;
+    int failed = 0;
+
+    printf("Running %d tests...\n\n", test_count);
+
+    for (int i = 0; i < test_count; i++) {
+        current_test_failed = 0;
+
+        printf("TEST: %s\n", test_list[i].name);
+
+        test_list[i].func();
+
+        if (current_test_failed) {
+            printf("  FAILED\n\n");
+            failed++;
+        } else {
+            printf("  PASSED\n\n");
+            passed++;
+        }
+    }
+
+    printf("============================\n");
+    printf("Tests:  %d\n", test_count);
+    printf("Passed: %d\n", passed);
+    printf("Failed: %d\n", failed);
+    printf("============================\n");
+
+    return failed ? 1 : 0;
+}
+
+#endif

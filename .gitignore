@@ -3,5 +3,6 @@ __pycache__/
 .DS_Store
 # build artefacts from running the checker locally
 .selfcheck
+solutions/
 a.out
 *.o
